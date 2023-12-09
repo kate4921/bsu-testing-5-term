@@ -12,7 +12,7 @@ public class Calculator
     public string? Error { get => error; }
 
     public readonly CompiledCode compiledCode;
-    
+
     public Calculator(CompiledCode compiledCode)
     {
         this.compiledCode = compiledCode;
@@ -23,23 +23,9 @@ public class Calculator
         return 0;
     }
 
-    public void ComputeOnTheTop(Stack<Token> operands, Stack<string> operators)
-    {
-        string op = operators.Pop();
-
-        Token? val2 = null;
-
-        if (!IsUnaryOperatioin(op))
-        {
-            val2 = operands.Pop();
-        }
-        var val1 = operands.Pop();
-
-        operands.Push(Operate(val1, val2, op));
-    }
-
     public Token Compute()
     {
+
         if (compiledCode?.tokens == null)
             return null;
 
@@ -56,18 +42,13 @@ public class Calculator
 
             if (token.Type == TokenType.Goto)
             {
-                i = (token as TokenGoto).toToken;
+                i = (token as TokenGoto).ToToken;
                 continue;
             }
 
             if (token.Type == TokenType.Operation)
             {
                 suspect = (token as TokenOperation).Operation;
-            }
-
-            if(token.Type == TokenType.ValueGlobalVar)
-            {
-                operands.Push(token);
             }
 
             if (suspect == "(")
@@ -82,7 +63,13 @@ public class Calculator
             {
                 while (operators.Count != 0 && operators.Peek() != "(")
                 {
-                    ComputeOnTheTop(operands, operators);
+                    var val2 = operands.Pop();
+
+                    var val1 = operands.Pop();
+
+                    var op = operators.Pop();
+
+                    operands.Push(Operate(val1, val2, op));
                 }
 
                 if (operators.Count != 0) operators.Pop();
@@ -90,10 +77,16 @@ public class Calculator
             else
             {
                 var currentOperatorPriority = GetOperationPriority(suspect);
-                
+
                 while (operators.Count != 0 && GetOperationPriority(operators.Peek()) >= currentOperatorPriority)
                 {
-                    ComputeOnTheTop(operands, operators);
+                    var val2 = operands.Pop();
+
+                    var val1 = operands.Pop();
+
+                    string op = operators.Pop();
+
+                    operands.Push(Operate(val1, val2, op));
                 }
 
                 operators.Push(suspect);
@@ -103,228 +96,207 @@ public class Calculator
 
         while (operators.Count != 0 && operands.Count > 1)
         {
-            ComputeOnTheTop(operands, operators);
+            var val2 = operands.Pop();
+
+            var val1 = operands.Pop();
+
+            string op = operators.Pop();
+
+            operands.Push(Operate(val1, val2, op));
         }
 
         if (operators.Count != 0)
         {
             string op = operators.Pop();
             throw new InvalidOperationException($"operators stack is not empty at the end: {op}");
+            //return double.NaN;
         }
 
         Token tokenretval = operands.Pop();
 
         if (operands.Count > 1)
         {
+            //double op = operands.Pop();
             throw new InvalidOperationException($"operands stack is not empty at the end: ((op))");
+            //return double.NaN;
         }
 
         return tokenretval;
     }
 
-    private static bool IsUnaryOperatioin(string operation)
-    {
-        if (operation == "!" || operation.StartsWith("Unary"))
-            return true;
-        return false;
-    }
-    
-    private static TokenConstantType Operate(Token left, Token? right, string operation)
+    private static TokenConstant Operate(Token left, Token right, string operation)
     {
         //if (left.Type == TokenType.Constant && right.Type == TokenType.Constant)
         //{
-            ExpressionType type1 = ExpressionType.Undefined, type2 = ExpressionType.Undefined;
-            int i1 = 0, i2 = 0;
-            double d1 = 0, d2 = 0;
-            string s1 = "", s2 = "";
-            bool b1 = false, b2 = false;
+        ExpressionType type1 = ExpressionType.Undefined, type2 = ExpressionType.Undefined;
+        int i1 = 0, i2 = 0;
+        double d1 = 0, d2 = 0;
+        string s1 = "", s2 = "";
+        bool b1 = false, b2 = false;
 
-            if (left is TokenConstant<int> ti)
-            {
-                type1 = ExpressionType.Int;
-                i1 = ti.value;
-            }
-            else if (left is TokenConstant<double> td) {
-                type1 = ExpressionType.Double;
-                d1 = td.value;
-            }
-            else if (left is TokenConstant<string> ts)
-            {
-                type1 = ExpressionType.Str;
-                s1 = ts.value;
-            }
-            else if (left is TokenConstant<bool> tb) {
-                type1 = ExpressionType.Bool;
-                b1 = tb.value;
-            }
+        if (left is TokenInt)
+        {
+            type1 = ExpressionType.Int;
+            i1 = (left as TokenInt).value;
+        }
+        else if (left is TokenDouble)
+        {
+            type1 = ExpressionType.Double;
+            d1 = (left as TokenDouble).value;
+        }
+        else if (left is TokenString)
+        {
+            type1 = ExpressionType.Str;
+            s1 = (left as TokenString).value;
+        }
+        else if (left is TokenBool)
+        {
+            type1 = ExpressionType.Bool;
+            b1 = (left as TokenBool).value;
+        }
 
-            if (right is TokenConstant<int> ti2)
-            {
-                type2 = ExpressionType.Int;
-                i2 = ti2.value;
-            }
-            else if (right is TokenConstant<double> td2)
-            {
-                type2 = ExpressionType.Double;
-                d2 = td2.value;
-            }
-            else if (right is TokenConstant<string> ts2) 
-            { 
-                type2 = ExpressionType.Str;
-                s2 = ts2.value;
-            }
-            else if (right is TokenConstant<bool> tb2) {
-                type2 = ExpressionType.Bool;
-                b2 = tb2.value;
-            }
+        if (right is TokenInt)
+        {
+            type2 = ExpressionType.Int;
+            i2 = (right as TokenInt).value;
+        }
+        else if (right is TokenDouble)
+        {
+            type2 = ExpressionType.Double;
+            d2 = (right as TokenDouble).value;
+        }
+        else if (right is TokenString)
+        {
+            type2 = ExpressionType.Str;
+            s2 = (right as TokenString).value;
+        }
+        else if (right is TokenBool)
+        {
+            type2 = ExpressionType.Bool;
+            b2 = (right as TokenBool).value;
+        }
 
-            var resultType = TypeResolver.ResultingOperationType(operation, type1, type2);
-            if (resultType == ExpressionType.Undefined)
-                    throw new InvalidOperationException($"Incompatible types: {operation} {type1} {type2} ");
+        var resultType = TypeResolver.ResultingOperationType(operation, type1, type2);
+        if (resultType == ExpressionType.Undefined)
+            throw new InvalidOperationException($"Incompatible types: {operation} {type1} {type2} ");
 
-            int intRes = 0;
-            double doubleRes = 0;
-            string stringRes = ""; 
-            bool boolRes = false;
-            bool err = false;
+        int intRes = 0;
+        double doubleRes = 0;
+        string stringRes = "";
+        bool boolRes = false;
+        bool err = false;
 
-            if ((type1 == ExpressionType.Double) || (type2 == ExpressionType.Double))
+        if ((type1 == ExpressionType.Double) || (type2 == ExpressionType.Double))
+        {
+            if (type1 == ExpressionType.Int)
             {
-                if (type1 == ExpressionType.Int)
-                {
-                    d1 = i1;
-                }
-                else if (type2 == ExpressionType.Int)
-                {
-                    d2 = i2;
-                }
+                d1 = i1;
             }
-
-            if (resultType == ExpressionType.Bool)
+            else if (type2 == ExpressionType.Int)
             {
-                if (operation == "!" && type1 == ExpressionType.Bool)
-                    boolRes = !b1;
-                else if (type1 == type2 && type1 == ExpressionType.Bool)
-                {
-                    if (operation == "&&") boolRes = b1 && b2;
-                    else if (operation == "||") boolRes = b1 || b2;
-                    else err = true;
-                }
-                else if (type1 == type2 && type1 == ExpressionType.Int)
-                {
-                    if (operation == "==") boolRes = i1 == i2;
-                    else if (operation == "!=") boolRes = i1 != i2;
-                    else if (operation == "<=") boolRes = i1 <= i2;
-                    else if (operation == ">=") boolRes = i1 >= i2;
-                    else if (operation == "<") boolRes = i1 < i2;
-                    else if (operation == ">") boolRes = i1 > i2;
-                    else err = true;
-                }
-                else if ((type1 == ExpressionType.Double) || (type2 == ExpressionType.Double))
-                {
-                    if (operation == "==") boolRes = d1 == d2;
-                    else if (operation == "!=") boolRes = d1 != d2;
-                    else if (operation == "<=") boolRes = d1 <= d2;
-                    else if (operation == ">=") boolRes = d1 >= d2;
-                    else if (operation == "<") boolRes = d1 < d2;
-                    else if (operation == ">") boolRes = d1 > d2;
-                    else err = true;
-                }
-                else if (type1 == type2 && type1 == ExpressionType.Str)
-                {
-                    if (operation == "==") boolRes = s1 == s2;
-                    else if (operation == "!=") boolRes = s1 != s2;
-                    else if (operation == "<=") boolRes = s1.CompareTo(s2) <= 0;
-                    else if (operation == ">=") boolRes = s1.CompareTo(s2) >= 0;
-                    else if (operation == "<") boolRes = s1.CompareTo(s2) < 0;
-                    else if (operation == ">") boolRes = s1.CompareTo(s2) > 0;
-                    else err = true;
-                }
-                else
-                {
-                    err = true;
-                }
+                d2 = i2;
             }
-            else if (resultType == ExpressionType.Int)
+        }
+
+        if (resultType == ExpressionType.Bool)
+        {
+            if (operation == "!" && type1 == ExpressionType.Bool)
+                boolRes = !b1;
+            else if (type1 == type2 && type1 == ExpressionType.Bool)
             {
-                if (type1 == ExpressionType.Int && (operation == "Unary-"))
-                {
-                    intRes = -i1;
-                }
-                else if (type1 == ExpressionType.Int && (operation == "Unary+"))
-                {
-                    intRes = +i1;
-                }
-                else if (type1 == type2 && type1 == ExpressionType.Int)
-                {
-                    if (operation == "+") intRes = i1 + i2;
-                    else if (operation == "-") intRes = i1 - i2;
-                    else if (operation == "*") intRes = i1 * i2;
-                    else if (operation == "/") intRes = i1 / i2;
-                    else if (operation == "%") intRes = i1 % i2;
-                    else err = true;
-                }
+                if (operation == "&&") boolRes = b1 && b2;
+                else if (operation == "||") boolRes = b1 || b2;
                 else err = true;
             }
-            else if (resultType == ExpressionType.Double)
+            else if (type1 == type2 && type1 == ExpressionType.Int)
             {
-                if (type1 == ExpressionType.Double && (operation == "Unary-"))
-                {
-                    doubleRes = -d1;
-                }
-                else if (type1 == ExpressionType.Double && (operation == "Unary+"))
-                {
-                    doubleRes = +d1;
-                }
-                else if (operation == "+") doubleRes = d1 + d2;
-                else if (operation == "-") doubleRes = d1 - d2;
-                else if (operation == "*") doubleRes = d1 * d2;
-                else if (operation == "/") doubleRes = d1 / d2;
+                if (operation == "==") boolRes = i1 == i2;
+                else if (operation == "!=") boolRes = i1 != i2;
+                else if (operation == "<=") boolRes = i1 <= i2;
+                else if (operation == ">=") boolRes = i1 >= i2;
+                else if (operation == "<") boolRes = i1 < i2;
+                else if (operation == ">") boolRes = i1 > i2;
                 else err = true;
             }
-            else if (resultType == ExpressionType.Str)
+            else if ((type1 == ExpressionType.Double) || (type2 == ExpressionType.Double))
             {
-                if (type1 == type2 && type1 == ExpressionType.Str)
-                    if (operation == "+") stringRes = s1 + s2;
-                    else err = true;
+                if (operation == "==") boolRes = d1 == d2;
+                else if (operation == "!=") boolRes = d1 != d2;
+                else if (operation == "<=") boolRes = d1 <= d2;
+                else if (operation == ">=") boolRes = d1 >= d2;
+                else if (operation == "<") boolRes = d1 < d2;
+                else if (operation == ">") boolRes = d1 > d2;
+                else err = true;
+            }
+            else if (type1 == type2 && type1 == ExpressionType.Str)
+            {
+                if (operation == "==") boolRes = s1 == s2;
+                else if (operation == "!=") boolRes = s1 != s2;
+                else if (operation == "<=") boolRes = s1.CompareTo(s2) <= 0;
+                else if (operation == ">=") boolRes = s1.CompareTo(s2) >= 0;
+                else if (operation == "<") boolRes = s1.CompareTo(s2) < 0;
+                else if (operation == ">") boolRes = s1.CompareTo(s2) > 0;
+                else err = true;
             }
             else
             {
                 err = true;
             }
-
-            if (err)
+        }
+        else if (resultType == ExpressionType.Int)
+        {
+            if (type1 == type2 && type1 == ExpressionType.Int)
             {
-                throw new InvalidOperationException($"Invalid operation: {operation} {type1} {type2} ");
+                if (operation == "+") intRes = i1 + i2;
+                else if (operation == "-") intRes = i1 - i2;
+                else if (operation == "*") intRes = i1 * i2;
+                else if (operation == "/") intRes = i1 / i2;
+                else if (operation == "%") intRes = i1 % i2;
+                else err = true;
             }
-
-            TokenConstantType resToken;
-
-            if (resultType == ExpressionType.Bool)
-                resToken = new TokenConstant<bool>(boolRes, ExpressionType.Bool);
-            else if (resultType == ExpressionType.Int)
-                resToken = new TokenConstant<int>(intRes, ExpressionType.Int);
-            else if (resultType == ExpressionType.Double)
-                resToken = new TokenConstant<double>(doubleRes, ExpressionType.Double);
-            else if (resultType == ExpressionType.Str)
-                resToken = new TokenConstant<string>(stringRes, ExpressionType.Str);
-            else
-            {
-                throw new InvalidOperationException($"Invalid operation result type: {operation} {type1} {type2} {resultType} ");
-            }
-
-            return resToken;
+        }
+        else if (resultType == ExpressionType.Double)
+        {
+            if (operation == "+") doubleRes = d1 + d2;
+            else if (operation == "-") doubleRes = d1 - d2;
+            else if (operation == "*") doubleRes = d1 * d2;
+            else if (operation == "/") doubleRes = d1 / d2;
+            else err = true;
+        }
+        else if (resultType == ExpressionType.Str)
+        {
+            if (type1 == type2 && type1 == ExpressionType.Str)
+                if (operation == "+") stringRes = s1 + s2;
+                else err = true;
+        }
+        else
+        {
+            err = true;
         }
 
-    private static int GetOperationPriority(string operation) =>
-    operation switch
-    {
-        "<" or ">" or "==" or "!=" or "<=" or ">=" => 5,
-        "+" or "-" => 10,
-        "*" or "/" => 20,
-        "Unary-" or "Unary+" or "!" => 30,
-        _ => 0
-    };
+        if (err)
+        {
+            throw new InvalidOperationException($"Invalid operation: {operation} {type1} {type2} ");
+        }
+
+        TokenConstant resToken;
+
+        if (resultType == ExpressionType.Bool)
+            resToken = new TokenBool(boolRes);
+        else if (resultType == ExpressionType.Int)
+            resToken = new TokenInt(intRes);
+        else if (resultType == ExpressionType.Double)
+            resToken = new TokenDouble(doubleRes);
+        else if (resultType == ExpressionType.Str)
+            resToken = new TokenString(stringRes);
+        else
+        {
+            throw new InvalidOperationException($"Invalid operation result type: {operation} {type1} {type2} {resultType} ");
+        }
+
+        return resToken;
+    }
+
 
     /******
     public double ComputeString(string source)
@@ -432,6 +404,13 @@ public class Calculator
         };
      ***********/
 
+    private static int GetOperationPriority(string operation) =>
+    operation switch
+    {
+        "+" or "-" => 1,
+        "*" or "/" => 2,
+        _ => 0
+    };
 
     /// <summary>
     /// Check if the given char is digit

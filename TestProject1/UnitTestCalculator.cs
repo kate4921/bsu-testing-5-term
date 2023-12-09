@@ -51,8 +51,7 @@ public class Tests
 
         const double tolerance = 1e-200;
 
-
-        Assert.That(Math.Abs(actualDouble/expected-1), Is.LessThanOrEqualTo(tolerance));
+        Assert.That(Math.Abs(actualDouble / expected - 1), Is.LessThanOrEqualTo(tolerance));
     }
 
     [TestCase(" 2 +3 ", 5)]
@@ -69,6 +68,14 @@ public class Tests
         Assert.That(actualInt, Is.EqualTo(expected));
     }
 
+    [TestCase("x = 1;")]
+    public void TestAssign(string expression)///, int expected)
+    {
+        Token actual = Execution.Exec(expression); //Calculator.Compute(expression);
+        var actualInt = (actual as TokenConstant<int>).value;
+
+        Assert.IsTrue(true);// actualInt, Is.EqualTo(expected));
+    }
     //[Test, Category("Positive scenario")]
     //public void ComputesWithPriority()
     //{

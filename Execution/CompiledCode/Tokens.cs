@@ -87,17 +87,7 @@ public class TokenOperation : Token
     {
         this.Operation = value;
     }
-}
 
-public class TokenGoto: Token
-{
-    //public readonly Token ToToken;
-    public readonly int toToken;
-
-    public TokenGoto(TokenType type, int toToken) : base(type)
-    {
-        this.toToken = toToken;
-    }
 }
 
 public class TokenVar : Token
@@ -110,13 +100,23 @@ public class TokenVar : Token
         this.name = name;
         this.def = def;
     }
+
+}
+
+public class TokenGoto : Token
+{
+    //public readonly Token ToToken;
+    public readonly int toToken;
+
+    public TokenGoto(TokenType type, int toToken) : base(type)
+    {
+        this.toToken = toToken;
+    }
 }
 
 public class CompiledCode
 {
     public readonly IList<Token> tokens = new List<Token>();
-
-
 
     public void AddGoto(int toToken)
     {
@@ -126,17 +126,17 @@ public class CompiledCode
     {
         this.tokens.Add(new TokenGoto(TokenType.GotoIf, toToken));
     }
-
     public void AddOperation(string operation)
     {
         this.tokens.Add(new TokenOperation(operation));
     }
-    public void AddGlodalVarValue(string name, VariableDef def)
+
+    public void AddGlobalVarValue(string name, VariableDef def)
     {
         this.tokens.Add(new TokenVar(name, def, TokenType.ValueGlobalVar));
     }
 
-    public void AddRefGlodalVar(string name, VariableDef def)
+    public void AddRefGlobalVar(string name, VariableDef def)
     {
         this.tokens.Add(new TokenVar(name, def, TokenType.RefGlobalVar));
     }
@@ -163,4 +163,3 @@ public class CompiledCode
         //this.tokens.Add(new TokenBool(value));
     }
 }
-
