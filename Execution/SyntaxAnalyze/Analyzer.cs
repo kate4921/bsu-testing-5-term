@@ -539,7 +539,8 @@ public class Analyzer
         }
 
         AddVar(name, _funcName);
-
+        var def = GetVar(name, _funcName);
+        CompiledCode.AddRefGlodalVar(name,def);
         return true;
     }
 

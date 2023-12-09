@@ -116,10 +116,7 @@ public class CompiledCode
 {
     public readonly IList<Token> tokens = new List<Token>();
 
-    public void AddGlodalVarValue(string name, VariableDef def)
-    {
-        this.tokens.Add(new TokenVar(name,def,TokenType.ValueGlobalVar));
-    }
+
 
     public void AddGoto(int toToken)
     {
@@ -129,11 +126,20 @@ public class CompiledCode
     {
         this.tokens.Add(new TokenGoto(TokenType.GotoIf, toToken));
     }
+
     public void AddOperation(string operation)
     {
         this.tokens.Add(new TokenOperation(operation));
     }
+    public void AddGlodalVarValue(string name, VariableDef def)
+    {
+        this.tokens.Add(new TokenVar(name, def, TokenType.ValueGlobalVar));
+    }
 
+    public void AddRefGlodalVar(string name, VariableDef def)
+    {
+        this.tokens.Add(new TokenVar(name, def, TokenType.RefGlobalVar));
+    }
     public void AddString(string value)
     {
         this.tokens.Add(new TokenConstant<string>(value, ExpressionType.Str));
